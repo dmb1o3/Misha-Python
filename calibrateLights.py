@@ -3,22 +3,26 @@ import numpy as np
 import os
 
 
-def calibrate_light(directory: str, num_lights: int) -> np.ndarray:
-    """
-    Calibrate lighting direction using chrome sphere images.
+def apply_mask(image, mask, xc, yc, radius):
+    rows, cols = image.shape
 
-    Args:
-        directory (str): Path to directory containing chrome sphere images
-        num_lights (int): Number of light sources to calibrate
+    # **Step 1: Apply the Mask (Black out everything outside the mask)**
+    image[mask == 0] = 0  # Set all pixels outside the mask to black
 
-    Returns:
-        np.ndarray: Array of light directions, shape (num_lights, 3)
-    """
-    # Ensure directory path ends with separator
-    if not directory.endswith('/'):
-        directory += '/'
+    # **Step 2: Keep Only the Brightest Spots**
+    max_val = np.max(image)  # Find the brightest value
+    image[image < max_val] = 0  # Set all pixels not at max brightness to black
 
-    # Read the chrome sphere mask
+    # **Step 3: Trim Excess Pixels Outside the Mirror Ball**
+    y_indices, x_indices = np.indices((rows, cols))  # Create grid of coordinates
+    distances = np.sqrt((y_indices - yc) ** 2 + (x_indices - xc) ** 2)  # Compute distances from center
+    image[distances >= (radius - 5)] = 0  # Set pixels outside the defined radius to black
+
+    return image
+
+
+def calibrate_light(directory, num_lights):
+    # Get the mask
     mask_filename = os.path.join(directory, 'calibration_mask.tiff')
     circle = cv2.imread(mask_filename, cv2.IMREAD_GRAYSCALE)
 
@@ -26,15 +30,11 @@ def calibrate_light(directory: str, num_lights: int) -> np.ndarray:
     max_val = np.max(circle)
     circle_coords = np.where(circle == max_val)
     circle_rows, circle_cols = circle_coords[0], circle_coords[1]
-
-    # Calculate sphere parameters
     max_row, min_row = np.max(circle_rows), np.min(circle_rows)
     max_col, min_col = np.max(circle_cols), np.min(circle_cols)
-
     xc = (max_col + min_col) / 2
     yc = (max_row + min_row) / 2
     radius = (max_row - min_row) / 2
-
     print(f"Center: ({xc}, {yc})")
     print(f"Radius: {radius}")
 
@@ -48,18 +48,21 @@ def calibrate_light(directory: str, num_lights: int) -> np.ndarray:
         img_filename = os.path.join(directory, f'calibration_{calibration_names[i]}.tiff')
         image = cv2.imread(img_filename, cv2.IMREAD_GRAYSCALE)
 
-        # Find brightest point
-        max_val = np.max(image)
-        point_coords = np.where(image == max_val)
-        point_rows, point_cols = point_coords[0], point_coords[1]
+        # Apply the mask
+        masked_image = apply_mask(image, circle, xc, yc, radius)
 
-        # Calculate average position of brightest points
+        # Find the brightest point
+        max_val = np.max(masked_image)
+        point_cords = np.where(image == max_val)
+        point_rows, point_cols = point_cords[0], point_cords[1]
+
+        # Calculate average position of the brightest points
         px = np.mean(point_cols)
         py = np.mean(point_rows)
 
         # Calculate surface normal at brightest point
         Nx = px - xc
-        Ny = -(py - yc)  # Note the negative sign to match MATLAB convention
+        Ny = -(py - yc)
         Nz = np.sqrt(radius ** 2 - Nx ** 2 - Ny ** 2)
 
         # Normalize the normal vector
@@ -76,11 +79,6 @@ def calibrate_light(directory: str, num_lights: int) -> np.ndarray:
         for light_dir in L:
             f.write(f" {light_dir[0]:10.5f} {light_dir[1]:10.5f} {light_dir[2]:10.5f}\n")
 
+    # Return the light directions
     return L
 
-
-# Example usage:
-if __name__ == "__main__":
-    light_directions = calibrate_light("./preprocessedImages/calibrate", 4)
-    print("Calibrated light directions:")
-    print(light_directions)
