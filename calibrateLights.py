@@ -6,14 +6,14 @@ import os
 def apply_mask(image, mask, xc, yc, radius):
     rows, cols = image.shape
 
-    # **Step 1: Apply the Mask (Black out everything outside the mask)**
+    # Apply the Mask
     image[mask == 0] = 0  # Set all pixels outside the mask to black
 
-    # **Step 2: Keep Only the Brightest Spots**
+    # Keep Only the Brightest Spots
     max_val = np.max(image)  # Find the brightest value
     image[image < max_val] = 0  # Set all pixels not at max brightness to black
 
-    # **Step 3: Trim Excess Pixels Outside the Mirror Ball**
+    # Trim Excess Pixels
     y_indices, x_indices = np.indices((rows, cols))  # Create grid of coordinates
     distances = np.sqrt((y_indices - yc) ** 2 + (x_indices - xc) ** 2)  # Compute distances from center
     image[distances >= (radius - 5)] = 0  # Set pixels outside the defined radius to black
