@@ -75,9 +75,8 @@ def calibrate_light(directory, num_lights):
     # Save calibrated light directions
     output_file = os.path.join(directory, 'calibrated_light.txt')
     with open(output_file, 'w') as f:
-        f.write(f"{num_lights}\n")
         for light_dir in L:
-            f.write(f" {light_dir[0]:10.5f} {light_dir[1]:10.5f} {light_dir[2]:10.5f}\n")
+            f.write(f"{light_dir[0]:.5f} {light_dir[1]:.5f} {light_dir[2]:.5f}\n")
 
     # Return the light directions
     return L
