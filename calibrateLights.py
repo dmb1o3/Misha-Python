@@ -23,7 +23,7 @@ def apply_mask(image, mask, xc, yc, radius):
 
 def calibrate_light(directory, num_lights):
     # Get the mask
-    mask_filename = os.path.join(directory, 'calibration_mask.tiff')
+    mask_filename = os.path.join(directory, 'mask/calibration_mask.tiff')
     circle = cv2.imread(mask_filename, cv2.IMREAD_GRAYSCALE)
 
     # Calculate chrome sphere center and radius
