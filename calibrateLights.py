@@ -41,36 +41,35 @@ def calibrate_light(directory, num_lights):
     # Initialize variables
     R = np.array([0, 0, 1.0])  # Reflection direction
     L = np.zeros((num_lights, 3))  # Light directions matrix
-    calibration_names = ["n", "e", "s", "w"]
+    i = 0
     # Process each light source
-    for i in range(num_lights):
-        # Read chrome sphere image for current light
-        img_filename = os.path.join(directory, f'calibration_{calibration_names[i]}.tiff')
-        image = cv2.imread(img_filename, cv2.IMREAD_GRAYSCALE)
+    for filename in os.listdir(directory):
+        image = cv2.imread(os.path.join(directory, filename), cv2.IMREAD_GRAYSCALE)
+        if image is not None:
+            # Apply the mask
+            masked_image = apply_mask(image, circle, xc, yc, radius)
 
-        # Apply the mask
-        masked_image = apply_mask(image, circle, xc, yc, radius)
+            # Find the brightest point
+            max_val = np.max(masked_image)
+            point_cords = np.where(image == max_val)
+            point_rows, point_cols = point_cords[0], point_cords[1]
 
-        # Find the brightest point
-        max_val = np.max(masked_image)
-        point_cords = np.where(image == max_val)
-        point_rows, point_cols = point_cords[0], point_cords[1]
+            # Calculate average position of the brightest points
+            px = np.mean(point_cols)
+            py = np.mean(point_rows)
 
-        # Calculate average position of the brightest points
-        px = np.mean(point_cols)
-        py = np.mean(point_rows)
+            # Calculate surface normal at brightest point
+            Nx = px - xc
+            Ny = -(py - yc)
+            Nz = np.sqrt(radius ** 2 - Nx ** 2 - Ny ** 2)
 
-        # Calculate surface normal at brightest point
-        Nx = px - xc
-        Ny = -(py - yc)
-        Nz = np.sqrt(radius ** 2 - Nx ** 2 - Ny ** 2)
+            # Normalize the normal vector
+            normal = np.array([Nx, Ny, Nz]) / radius
 
-        # Normalize the normal vector
-        normal = np.array([Nx, Ny, Nz]) / radius
-
-        # Calculate light direction using reflection formula
-        NR = np.dot(normal, R)
-        L[i] = 2 * NR * normal - R
+            # Calculate light direction using reflection formula
+            NR = np.dot(normal, R)
+            L[i] = 2 * NR * normal - R
+            i += 1
 
     # Save calibrated light directions
     output_file = os.path.join(directory, 'calibrated_light.txt')

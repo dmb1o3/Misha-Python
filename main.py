@@ -1,12 +1,16 @@
 from calibrateLights import calibrate_light
 from downcaledTargetNormals import generate_normal_map
 from SAMSegmenter import SAMSegmenter, checkpoints
-from MSDTest import generate_depth_map
 from preprocess import preprocess_image
 import os
 import cv2
 
+
 def check_make_folder(directory):
+    """
+    Will make sure that a folder exists if not will create it. Checks to make sure
+    previous folders are generated as well
+    """
     os.makedirs(directory, exist_ok=True)
 
 
@@ -45,15 +49,13 @@ def preprocess_generate_mask(directory):
                 # Save calibration image
                 cv2.imwrite(directory + "/preprocessedImages/" + filename, img)
                 calibration_mask = filename
-
             else:
                 # Save target image
                 cv2.imwrite(directory + "/preprocessedImages/target/" + filename, img)
                 target_mask = filename
 
-
     # Select a calibration and target frame and generate a mask for each of them
-    segmenter = SAMSegmenter("vit_l", checkpoints["vit_l"])
+    segmenter = SAMSegmenter("vit_b", checkpoints["vit_b"])
     segmenter.generate_mask(
         directory + "preprocessedImages/" + calibration_mask,
         directory + "preprocessedImages/mask/calibration"
@@ -64,11 +66,8 @@ def preprocess_generate_mask(directory):
     )
 
 
-    return
-
-
 def run():
-    directory = "./TestImages/"
+    directory = "./data/Square frame calibrated/"
     # Preprocess images and generate old_mask for calibration and target
     preprocess_generate_mask(directory)
     # Update the directory to now use the preprocessed images
