@@ -18,14 +18,14 @@ def preprocess_image(image, downscale_factor):
     :return:
     """
     # TESTING show the original image
-    cv2.imshow('Original Image', image)
+    #cv2.imshow('Original Image', image)
 
     # Flat fielding
 
     # Image normalization
     image = cv2.normalize(image, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
     # TESTING Display the normalized image
-    cv2.imshow('Normalized Image', image)
+    #cv2.imshow('Normalized Image', image)
 
     # Alignment
 
@@ -36,10 +36,10 @@ def preprocess_image(image, downscale_factor):
     # Rescaling
     image = cv2.resize(image, (0, 0), fx=downscale_factor, fy=downscale_factor)
     # TESTING Display the resized image
-    cv2.imshow('Resized Image', image)
+    #cv2.imshow('Resized Image', image)
 
     # Wait for user to press key and then destroy all images
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
 
     return image
