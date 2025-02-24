@@ -34,7 +34,7 @@ def preprocess_image(image, downscale_factor):
     # Sampling patches
 
     # Rescaling
-    image = cv2.resize(image, (0, 0), fx=downscale_factor, fy=downscale_factor)
+    image = cv2.resize(image, (0, 0), fx=downscale_factor, fy=downscale_factor, interpolation=cv2.INTER_NEAREST)
     # TESTING Display the resized image
     #cv2.imshow('Resized Image', image)
 
