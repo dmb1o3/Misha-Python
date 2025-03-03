@@ -37,22 +37,23 @@ def preprocess_generate_mask(directory):
     # Used to save the last calibration and target file names preprocessed to then make a mask
     calibration_mask = ""
     target_mask = ""
+    image_data = {}
     # Read in all images in the directory, preprocess them and then save them in a folder in directory
     for filename in os.listdir(directory):
         # Try to read image and if not none we have a valid image
         img = cv2.imread(os.path.join(directory,filename))
         if img is not None:
-            # Preprocess images
-            img = preprocess_image(img, 0.5)
-            # Check if image is for calibration or for target
-            if filename.split("_")[0] == "calibration":
-                # Save calibration image
-                cv2.imwrite(directory + "/preprocessedImages/" + filename, img)
-                calibration_mask = filename
-            else:
-                # Save target image
-                cv2.imwrite(directory + "/preprocessedImages/target/" + filename, img)
-                target_mask = filename
+            prefix = filename.split("_")
+            suffix = prefix[1]
+            prefix = prefix[0]
+            # Check to see if we have subdict set up. If not set it up to store image
+            if suffix not in image_data:
+                image_data[suffix] = {"target":None, "calibration":None, "flat":None}
+
+            image_data[suffix][prefix] = img
+
+    for key in image_data:
+        preprocess_image(image_data[key]["calibration"], image_data[key]["target"], image_data[key]["flat"], 0.5, directory, key)
 
     # Select a calibration and target frame and generate a mask for each of them
     segmenter = SAMSegmenter("vit_b", checkpoints["vit_b"])
@@ -67,7 +68,7 @@ def preprocess_generate_mask(directory):
 
 
 def run():
-    directory = "./data/Square frame calibrated/"
+    directory = "./2-26-2025 Square Photos/"
     # Preprocess images and generate old_mask for calibration and target
     preprocess_generate_mask(directory)
     # Update the directory to now use the preprocessed images

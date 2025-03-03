@@ -23,7 +23,6 @@ DATA_FOLDERNAME = './data/targetDownscaled/'    # Lambertian diffuse with cast s
 LIGHT_FILENAME = './data/targetDownscaled/lights_mm.txt'
 MASK_FILENAME = './data/targetDownscaled/mask/target_mask.tiff'
 
-\
 
 # Photometric Stereo
 rps = RPS()
