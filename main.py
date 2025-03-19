@@ -1,10 +1,31 @@
+import matplotlib.pyplot as plt
+import numpy as np
+from skimage import io
 from calibrateLights import calibrate_light
 from downcaledTargetNormals import generate_normal_map
 from SAMSegmenter import SAMSegmenter, checkpoints
 from preprocess import preprocess_image
+from matlab2python import depth_map
+from matplotlib import cm
+from height_map import estimate_height_map
 import os
 import cv2
+import plotly.graph_objects as go
 
+NORMAL_MAP_A_PATH: str = (
+    "https://raw.githubusercontent.com/YertleTurtleGit/depth-from-normals/main/normal_mapping_a.png"
+)
+NORMAL_MAP_B_PATH: str = (
+    "https://raw.githubusercontent.com/YertleTurtleGit/depth-from-normals/main/normal_mapping_b.png"
+)
+
+BLENDER_MAP: str = (
+    "target_e_normals.png"
+)
+
+NORMAL_MAP_A_IMAGE: np.ndarray = io.imread(NORMAL_MAP_A_PATH)
+NORMAL_MAP_B_IMAGE: np.ndarray = io.imread(NORMAL_MAP_B_PATH)
+NORMAL_MAP_BLENDER_IMAGE: np.ndarray = io.imread(BLENDER_MAP)
 
 def check_make_folder(directory):
     """
@@ -54,6 +75,11 @@ def preprocess_generate_mask(directory):
 
     for key in image_data:
         preprocess_image(image_data[key]["calibration"], image_data[key]["target"], image_data[key]["flat"], 0.5, directory, key)
+        calibration_mask = "calibration_" + key
+        target_mask = "target_" + key
+
+    print(calibration_mask)
+    print(target_mask)
 
     # Select a calibration and target frame and generate a mask for each of them
     segmenter = SAMSegmenter("vit_b", checkpoints["vit_b"])
@@ -68,15 +94,53 @@ def preprocess_generate_mask(directory):
 
 
 def run():
-    directory = "./2-26-2025 Square Photos/"
+    directory = "./3-5-2025/"
     # Preprocess images and generate old_mask for calibration and target
-    preprocess_generate_mask(directory)
+    #preprocess_generate_mask(directory)
     # Update the directory to now use the preprocessed images
     directory = directory + "preprocessedImages/"
     # Calibrate the lights
-    calibrate_light(directory, 4)
+    #calibrate_light(directory, 4)
     # Generate the normal maps
-    generate_normal_map(directory)
+    normals = generate_normal_map(directory)
+    z = depth_map(normals, cv2.imread(directory + "mask/target_mask.tiff", cv2.IMREAD_GRAYSCALE))
+    # To display the surface normals
+    fig = go.Figure(data=[go.Surface(z=z, colorscale='gray')])
+    fig.update_layout(title='Depth Map', autosize=False, width=800, height=800, margin=dict(l=65, r=50, b=65, t=90))
+    fig.show()
+
+
+    """ plt.figure(figsize=(10, 8))
+    plt.imshow(normals)
+    plt.title('Surface Normals')
+    plt.axis('off')
+    plt.tight_layout()
+    plt.show()
+
+    # To create a 3D surface plot similar to MATLAB's surfl
+    fig = plt.figure(figsize=(12, 10))
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Create a grid of x and y coordinates
+    x = np.arange(0, z.shape[1])
+    y = np.arange(0, z.shape[0])
+    x, y = np.meshgrid(x, y)
+
+    # Plot the surface
+    surf = ax.plot_surface(x, y, z, cmap=cm.gray, linewidth=0, antialiased=True)
+
+    # Add a color bar
+    fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5)
+
+    # Set viewing angle similar to MATLAB's default
+    ax.view_init(30, -60)
+
+    plt.title('Depth Map')
+    plt.tight_layout()
+    plt.show()"""
+
+
+
 
 
 if __name__ == "__main__":
