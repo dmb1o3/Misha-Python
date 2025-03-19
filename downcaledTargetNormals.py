@@ -35,3 +35,5 @@ def generate_normal_map(directory):
     savemat(directory + 'downscaledTargetNormals.mat', mat)
     plt.imshow(normals, cmap='gray')
     plt.show()
+
+    return normals

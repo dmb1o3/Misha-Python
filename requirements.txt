@@ -9,3 +9,4 @@ torch
 torchvision
 pillow~=11.1.0
 segment_anything~=1.0
+plotly~=6.0.1
