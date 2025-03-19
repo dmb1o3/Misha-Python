@@ -110,36 +110,6 @@ def run():
     fig.show()
 
 
-    """ plt.figure(figsize=(10, 8))
-    plt.imshow(normals)
-    plt.title('Surface Normals')
-    plt.axis('off')
-    plt.tight_layout()
-    plt.show()
-
-    # To create a 3D surface plot similar to MATLAB's surfl
-    fig = plt.figure(figsize=(12, 10))
-    ax = fig.add_subplot(111, projection='3d')
-
-    # Create a grid of x and y coordinates
-    x = np.arange(0, z.shape[1])
-    y = np.arange(0, z.shape[0])
-    x, y = np.meshgrid(x, y)
-
-    # Plot the surface
-    surf = ax.plot_surface(x, y, z, cmap=cm.gray, linewidth=0, antialiased=True)
-
-    # Add a color bar
-    fig.colorbar(surf, ax=ax, shrink=0.5, aspect=5)
-
-    # Set viewing angle similar to MATLAB's default
-    ax.view_init(30, -60)
-
-    plt.title('Depth Map')
-    plt.tight_layout()
-    plt.show()"""
-
-
 
 
 
