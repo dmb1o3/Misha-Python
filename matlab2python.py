@@ -33,10 +33,10 @@ def depth_map(surf_normals, mask_image):
     num_pixels = len(object_pixels)
     print(f"num_pixels = {num_pixels}")
 
-    # Assign indices to object pixels
+    # Assign indices to object pixels (using 0-indexing)
     for d in range(num_pixels):
         p_row, p_col = object_pixels[d]
-        index[p_row, p_col] = d + 1
+        index[p_row, p_col] = d  # Store 0-indexed position
 
     # Create sparse matrix M and vector b
     M = sparse.lil_matrix((2 * num_pixels, num_pixels))
@@ -44,7 +44,6 @@ def depth_map(surf_normals, mask_image):
 
     print('entering depth map loop')
     for d in range(num_pixels):
-        print(d)
         p_row, p_col = object_pixels[d]
         nx = surf_normals[p_row, p_col, 0]
         ny = surf_normals[p_row, p_col, 1]
@@ -52,57 +51,58 @@ def depth_map(surf_normals, mask_image):
 
         # Both (X+1, Y) and (X, Y+1) are inside the object
         if p_col + 1 < ncols and p_row - 1 >= 0 and index[p_row, p_col + 1] > 0 and index[p_row - 1, p_col] > 0:
-            M[2 * d, index[p_row, p_col] - 1] = 1
-            M[2 * d, index[p_row, p_col + 1] - 1] = -1  # (X+1, Y)
+            M[2 * d, index[p_row, p_col]] = 1
+            M[2 * d, index[p_row, p_col + 1]] = -1  # (X+1, Y)
             b[2 * d] = nx / nz
 
-            M[2 * d + 1, index[p_row, p_col] - 1] = 1
-            M[2 * d + 1, index[p_row - 1, p_col] - 1] = -1  # (X, Y+1)
+            M[2 * d + 1, index[p_row, p_col]] = 1
+            M[2 * d + 1, index[p_row - 1, p_col]] = -1  # (X, Y+1)
             b[2 * d + 1] = ny / nz
 
         # (X, Y+1) is inside but (X+1, Y) is outside
         elif p_row - 1 >= 0 and index[p_row - 1, p_col] > 0:
             f = -1
             if p_col + f >= 0 and p_col + f < ncols and index[p_row, p_col + f] > 0:
-                M[2 * d, index[p_row, p_col] - 1] = 1
-                M[2 * d, index[p_row, p_col + f] - 1] = -1  # (X+f, Y)
+                M[2 * d, index[p_row, p_col]] = 1
+                M[2 * d, index[p_row, p_col + f]] = -1  # (X+f, Y)
                 b[2 * d] = f * nx / nz
 
-            M[2 * d + 1, index[p_row, p_col] - 1] = 1
-            M[2 * d + 1, index[p_row - 1, p_col] - 1] = -1  # (X, Y+1)
+            M[2 * d + 1, index[p_row, p_col]] = 1
+            M[2 * d + 1, index[p_row - 1, p_col]] = -1  # (X, Y+1)
             b[2 * d + 1] = ny / nz
 
         # (X+1, Y) is inside but (X, Y+1) is outside
         elif p_col + 1 < ncols and index[p_row, p_col + 1] > 0:
             f = -1
             if p_row - f >= 0 and p_row - f < nrows and index[p_row - f, p_col] > 0:
-                M[2 * d + 1, index[p_row, p_col] - 1] = 1
-                M[2 * d + 1, index[p_row - f, p_col] - 1] = -1  # (X, Y+f)
+                M[2 * d + 1, index[p_row, p_col]] = 1
+                M[2 * d + 1, index[p_row - f, p_col]] = -1  # (X, Y+f)
                 b[2 * d + 1] = f * ny / nz
 
-            M[2 * d, index[p_row, p_col] - 1] = 1
-            M[2 * d, index[p_row, p_col + 1] - 1] = -1  # (X+1, Y)
+            M[2 * d, index[p_row, p_col]] = 1
+            M[2 * d, index[p_row, p_col + 1]] = -1  # (X+1, Y)
             b[2 * d] = nx / nz
 
         # Both (X+1, Y) and (X, Y+1) are outside
         else:
             f = -1
             if p_col + f >= 0 and p_col + f < ncols and index[p_row, p_col + f] > 0:
-                M[2 * d, index[p_row, p_col] - 1] = 1
-                M[2 * d, index[p_row, p_col + f] - 1] = -1  # (X+f, Y)
+                M[2 * d, index[p_row, p_col]] = 1
+                M[2 * d, index[p_row, p_col + f]] = -1  # (X+f, Y)
                 b[2 * d] = f * nx / nz
 
             f = -1
             if p_row - f >= 0 and p_row - f < nrows and index[p_row - f, p_col] > 0:
-                M[2 * d + 1, index[p_row, p_col] - 1] = 1
-                M[2 * d + 1, index[p_row - f, p_col] - 1] = -1  # (X, Y+f)
+                M[2 * d + 1, index[p_row, p_col]] = 1
+                M[2 * d + 1, index[p_row - f, p_col]] = -1  # (X, Y+f)
                 b[2 * d + 1] = f * ny / nz
 
     # Convert to CSR format for efficient solving
     M = M.tocsr()
 
-    # Solve the system of equations
-    x, istop, itn, r1norm = lsqr(M, b)[:4]
+    # Solve the overdetermined system using least squares (equivalent to MATLAB's backslash)
+    print("Solving the linear system...")
+    x = lsqr(M, b)[0]  # Get just the solution vector
     x = x - np.min(x)
 
     # Populate the depth map
