@@ -1,6 +1,5 @@
 import numpy as np
 from scipy import sparse
-from scipy.sparse.linalg import spsolve
 from scipy.sparse.linalg import lsqr
 
 
@@ -15,9 +14,6 @@ def depth_map(surf_normals, mask_image):
     Returns:
     z: numpy array of shape (height, width) containing the depth map
     """
-    # Initialize empty depth map
-    z = np.zeros_like(mask_image, dtype=float)
-
     # Get dimensions
     nrows, ncols = mask_image.shape
     print(f"nrows = {nrows}")

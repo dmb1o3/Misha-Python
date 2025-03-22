@@ -1,16 +1,14 @@
-import matplotlib.pyplot as plt
-import numpy as np
-from skimage import io
-from calibrateLights import calibrate_light
-from downcaledTargetNormals import generate_normal_map
-from SAMSegmenter import SAMSegmenter, checkpoints
-from preprocess import preprocess_image
-from matlab2python import depth_map
-from matplotlib import cm
-from height_map import estimate_height_map
 import os
 import cv2
+import numpy as np
 import plotly.graph_objects as go
+from skimage import io
+from preprocess import preprocess_image
+from depth_map import generate_depth_map
+from calibrateLights import calibrate_light
+from SAMSegmenter import SAMSegmenter, checkpoints
+from downcaledTargetNormals import generate_normal_map
+
 
 NORMAL_MAP_A_PATH: str = (
     "https://raw.githubusercontent.com/YertleTurtleGit/depth-from-normals/main/normal_mapping_a.png"
@@ -26,6 +24,7 @@ BLENDER_MAP: str = (
 NORMAL_MAP_A_IMAGE: np.ndarray = io.imread(NORMAL_MAP_A_PATH)
 NORMAL_MAP_B_IMAGE: np.ndarray = io.imread(NORMAL_MAP_B_PATH)
 NORMAL_MAP_BLENDER_IMAGE: np.ndarray = io.imread(BLENDER_MAP)
+
 
 def check_make_folder(directory):
     """
@@ -94,23 +93,22 @@ def preprocess_generate_mask(directory):
 
 
 def run():
+    # Set directory with images
     directory = "./3-5-2025/"
-    # Preprocess images and generate old_mask for calibration and target
-    #preprocess_generate_mask(directory)
-    # Update the directory to now use the preprocessed images
+    # Preprocess images and generate mask for calibration and target
+    preprocess_generate_mask(directory)
+    # Update the directory to now use the preprocessed images we just generated
     directory = directory + "preprocessedImages/"
     # Calibrate the lights
-    #calibrate_light(directory, 4)
+    calibrate_light(directory, 4)
     # Generate the normal maps
-    normals = generate_normal_map(directory)
-    z = depth_map(normals, cv2.imread(directory + "mask/target_mask.tiff", cv2.IMREAD_GRAYSCALE))
-    # To display the surface normals
+    generate_normal_map(directory)
+    # Generate the depth map
+    z = generate_depth_map(directory + "downscaledTargetNormals.npy", directory + "depth_map")
+    # Display the surface normals
     fig = go.Figure(data=[go.Surface(z=z, colorscale='gray')])
-    fig.update_layout(title='Depth Map', autosize=False, width=800, height=800, margin=dict(l=65, r=50, b=65, t=90))
+    fig.update_layout(title='Depth Map', autosize=True)
     fig.show()
-
-
-
 
 
 if __name__ == "__main__":
