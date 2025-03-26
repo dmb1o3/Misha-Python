@@ -10,20 +10,14 @@ from SAMSegmenter import SAMSegmenter, checkpoints
 from downcaledTargetNormals import generate_normal_map
 
 
-NORMAL_MAP_A_PATH: str = (
-    "https://raw.githubusercontent.com/YertleTurtleGit/depth-from-normals/main/normal_mapping_a.png"
-)
-NORMAL_MAP_B_PATH: str = (
-    "https://raw.githubusercontent.com/YertleTurtleGit/depth-from-normals/main/normal_mapping_b.png"
-)
+#NORMAL_MAP_A_PATH: str = ( "https://raw.githubusercontent.com/YertleTurtleGit/depth-from-normals/main/normal_mapping_a.png")
+#NORMAL_MAP_B_PATH: str = ("https://raw.githubusercontent.com/YertleTurtleGit/depth-from-normals/main/normal_mapping_b.png")
 
-BLENDER_MAP: str = (
-    "target_e_normals.png"
-)
+#BLENDER_MAP: str = ("target_e_normals.png")
 
-NORMAL_MAP_A_IMAGE: np.ndarray = io.imread(NORMAL_MAP_A_PATH)
-NORMAL_MAP_B_IMAGE: np.ndarray = io.imread(NORMAL_MAP_B_PATH)
-NORMAL_MAP_BLENDER_IMAGE: np.ndarray = io.imread(BLENDER_MAP)
+#NORMAL_MAP_A_IMAGE: np.ndarray = io.imread(NORMAL_MAP_A_PATH)
+#NORMAL_MAP_B_IMAGE: np.ndarray = io.imread(NORMAL_MAP_B_PATH)
+#NORMAL_MAP_BLENDER_IMAGE: np.ndarray = io.imread(BLENDER_MAP)
 
 
 def check_make_folder(directory):
@@ -94,15 +88,15 @@ def preprocess_generate_mask(directory):
 
 def run():
     # Set directory with images
-    directory = "./3-5-2025/"
+    directory = "./data/3-5-2025/"
     # Preprocess images and generate mask for calibration and target
-    preprocess_generate_mask(directory)
+#    preprocess_generate_mask(directory)
     # Update the directory to now use the preprocessed images we just generated
     directory = directory + "preprocessedImages/"
     # Calibrate the lights
-    calibrate_light(directory, 4)
+#    calibrate_light(directory, 4)
     # Generate the normal maps
-    generate_normal_map(directory)
+#    generate_normal_map(directory)
     # Generate the depth map
     z = generate_depth_map(directory + "downscaledTargetNormals.npy", directory + "depth_map")
     # Display the surface normals
