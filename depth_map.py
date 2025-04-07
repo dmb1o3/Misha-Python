@@ -1,15 +1,10 @@
 import cv2
 import argparse
 import itertools
-
 import numpy as np
 import scipy.sparse as sparse
-import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
 from scipy.sparse.linalg import spsolve
 from sklearn.preprocessing import normalize
-import plotly.graph_objects as go
-
 
 eps = np.finfo(float).eps  # epsilon for avoiding zero division
 
@@ -242,6 +237,14 @@ def write_depth_map(filename, depth, mask_bg):
 
 
 def remove_polynomial_trend(depth_map, degree=2):
+    """
+    Given a depth map and degrees will fit a polynomial to the depth map to try and remove noise from image
+
+    :param depth_map: Numpy array of depth map
+    :param degree: Degrees of polynomial we are fitting
+    :return: Returns the corrected depth map and the fitted polynomial
+    """
+    # Replace 0 with NaN
     depth_map = np.where(depth_map == 0, np.nan, depth_map)
     height, width = depth_map.shape
 
@@ -251,39 +254,46 @@ def remove_polynomial_trend(depth_map, degree=2):
     y = Y_grid.flatten()
     z = depth_map.flatten()
 
-    # Ignore NaN values if any
+    # Ignore NaN values
     valid_indices = ~np.isnan(z)
-
     x = x[valid_indices]
     y = y[valid_indices]
     z = z[valid_indices]
 
-    # Normalize coordinates to avoid large coefficients
-    x = (x - x.mean()) / x.std()
-    y = (y - y.mean()) / y.std()
+    # Normalize coordinates
+    x_mean, x_std = x.mean(), x.std()
+    y_mean, y_std = y.mean(), y.std()
+    x_norm = (x - x_mean) / x_std
+    y_norm = (y - y_mean) / y_std
 
     # Generate polynomial terms
     powers = [(i, j) for i in range(degree + 1) for j in range(degree + 1 - i)]
-    A = np.column_stack([x ** i * y ** j for i, j in powers])
+    A = np.column_stack([x_norm ** i * y_norm ** j for i, j in powers])
 
-    # Define polynomial function
-    def poly_func(coords, *coeffs):
-        x, y = coords
-        return sum(coeffs[k] * (x ** i) * (y ** j) for k, (i, j) in enumerate(powers))
+    # Fit polynomial using lstsq (faster)
+    coeffs, _, _, _ = np.linalg.lstsq(A, z, rcond=None)
 
-    # Fit polynomial
-    coeffs, _ = curve_fit(poly_func, (x, y), z, p0=np.zeros(len(powers)))
+    # Define polynomial function for reconstruction
+    def poly_func(x, y, coeffs):
+        return sum(
+            coeffs[k] * ((x - x_mean) / x_std) ** i * ((y - y_mean) / y_std) ** j for k, (i, j) in enumerate(powers))
 
     # Reconstruct fitted surface
-    fitted_surface = sum(coeffs[k] * (X_grid ** i) * (Y_grid ** j) for k, (i, j) in enumerate(powers))
+    fitted_surface = poly_func(X_grid, Y_grid, coeffs)
 
-    # Subtract fitted surface to remove trend
+    # Create mask
+    #mask = ~np.isnan(depth_map)
+
+    # Apply mask to fitted surface
+    #fitted_surface = fitted_surface * mask
+
+    # Subtract fitted surface
     corrected_depth_map = depth_map - fitted_surface
 
     return corrected_depth_map, fitted_surface
 
 
-def generate_depth_map(normal_path, output, depth=None, d_lambda=1000, write=True):
+def generate_depth_map(normal_path, output, depth=None, d_lambda=100, write=True):
     print("Start reading input data...")
     n, mask = read_normal_map(normal_path)
     if depth is not None:
