@@ -1,4 +1,6 @@
 from __future__ import print_function
+
+import cv2
 from matplotlib import pyplot as plt
 from rps import RPS
 import time
@@ -44,7 +46,10 @@ def generate_normal_map(directory):
     # Load normal map
     normals = np.load(directory + "/downscaledTargetNormals.npy")
     # Scale normal map from [-1, 1] to [0, 1] and then display it. Just so it displays properly
-    normals = (normals + 1.0) / 2.0
+    #normals = (normals + 1.0) / 2.0
+    # Scale normal map from [-1, 1] to [0, 255] and then display it. Just so it displays properly
+    normals = ((normals + 1.0) / 2.0 * 255).astype(np.uint8)
+    cv2.imwrite(directory + "normal_map.png", normals)
     plt.imshow(normals, cmap='gray')
     plt.show()
 
