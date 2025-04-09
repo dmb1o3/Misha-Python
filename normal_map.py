@@ -45,11 +45,11 @@ def generate_normal_map(directory):
     rps.save_normalmap(filename=directory + "normals/normal_map")
     # Load normal map
     normals = np.load(directory + "normals/normal_map.npy")
-    # Scale normal map from [-1, 1] to [0, 1] and then display it. Just so it displays properly
-    #normals = (normals + 1.0) / 2.0
     # Scale normal map from [-1, 1] to [0, 255] and then display it. Just so it displays properly
     normals = ((normals + 1.0) / 2.0 * 255).astype(np.uint8)
-    cv2.imwrite(directory + "normals/normal_map.png", normals)
+    # CV2 expects BGR while matplotlib expects RGB. Convert to BGR and then save properly
+    cv2_normals = cv2.cvtColor(normals, cv2.COLOR_RGB2BGR)
+    cv2.imwrite(directory + "normals/normal_map.png", cv2_normals)
     plt.imshow(normals, cmap='gray')
     plt.show()
 
