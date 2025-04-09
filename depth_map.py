@@ -1,15 +1,10 @@
 import cv2
 import argparse
 import itertools
-
 import numpy as np
 import scipy.sparse as sparse
-import matplotlib.pyplot as plt
-
 from scipy.sparse.linalg import spsolve
 from sklearn.preprocessing import normalize
-import plotly.graph_objects as go
-
 
 eps = np.finfo(float).eps  # epsilon for avoiding zero division
 
@@ -185,7 +180,6 @@ class PoissonOperator(object):
             vals_all.append(colvals)
             rows_all.append(np.ones_like(colidx) * row_global)
             row_global += 1
-
         rows_all_flat = list(itertools.chain.from_iterable(rows_all))
         cols_all_flat = list(itertools.chain.from_iterable(cols_all))
         vals_all_flat = list(itertools.chain.from_iterable(vals_all))
@@ -218,7 +212,6 @@ def read_normal_map(path):
     if ".npy" in path:
         n = np.load(path)
         mask_bg = (n[..., 2] == 0)  # get background mask
-
     else:
         n = cv2.imread(path)
 
@@ -243,6 +236,63 @@ def write_depth_map(filename, depth, mask_bg):
     np.save(filename, depth)
 
 
+def remove_polynomial_trend(depth_map, degree=2):
+    """
+    Given a depth map and degrees will fit a polynomial to the depth map to try and remove noise from image
+
+    :param depth_map: Numpy array of depth map
+    :param degree: Degrees of polynomial we are fitting
+    :return: Returns the corrected depth map and the fitted polynomial
+    """
+    # Replace 0 with NaN
+    depth_map = np.where(depth_map == 0, np.nan, depth_map)
+    height, width = depth_map.shape
+
+    # Create coordinate grids
+    Y_grid, X_grid = np.mgrid[:height, :width]
+    x = X_grid.flatten()
+    y = Y_grid.flatten()
+    z = depth_map.flatten()
+
+    # Ignore NaN values
+    valid_indices = ~np.isnan(z)
+    x = x[valid_indices]
+    y = y[valid_indices]
+    z = z[valid_indices]
+
+    # Normalize coordinates
+    x_mean, x_std = x.mean(), x.std()
+    y_mean, y_std = y.mean(), y.std()
+    x_norm = (x - x_mean) / x_std
+    y_norm = (y - y_mean) / y_std
+
+    # Generate polynomial terms
+    powers = [(i, j) for i in range(degree + 1) for j in range(degree + 1 - i)]
+    A = np.column_stack([x_norm ** i * y_norm ** j for i, j in powers])
+
+    # Fit polynomial using lstsq (faster)
+    coeffs, _, _, _ = np.linalg.lstsq(A, z, rcond=None)
+
+    # Define polynomial function for reconstruction
+    def poly_func(x, y, coeffs):
+        return sum(
+            coeffs[k] * ((x - x_mean) / x_std) ** i * ((y - y_mean) / y_std) ** j for k, (i, j) in enumerate(powers))
+
+    # Reconstruct fitted surface
+    fitted_surface = poly_func(X_grid, Y_grid, coeffs)
+
+    # Create mask
+    #mask = ~np.isnan(depth_map)
+
+    # Apply mask to fitted surface
+    #fitted_surface = fitted_surface * mask
+
+    # Subtract fitted surface
+    corrected_depth_map = depth_map - fitted_surface
+
+    return corrected_depth_map, fitted_surface
+
+
 def generate_depth_map(normal_path, output, depth=None, d_lambda=100, write=True):
     print("Start reading input data...")
     n, mask = read_normal_map(normal_path)
@@ -255,7 +305,8 @@ def generate_depth_map(normal_path, output, depth=None, d_lambda=100, write=True
     task = PoissonOperator(np.dstack([p, q]), mask.astype(np.int8), depth, d_lambda)
     print("Start normal integration...")
     d = task.run()
-
+    print("Start polynomial fitting...")
+    c_d, fitted = remove_polynomial_trend(d, degree=2)
     if write:
         print("Start writing obj file...")
         write_obj("{0}.obj".format(output), d, task.v_index)  # write obj file
@@ -264,9 +315,7 @@ def generate_depth_map(normal_path, output, depth=None, d_lambda=100, write=True
     write_depth_map("{0}_depth.npy".format(output), d, ~mask)  # write depth file
     print("Finish!")
 
-    return d
-
-
+    return d, c_d, fitted
 
 
 if __name__ == '__main__':

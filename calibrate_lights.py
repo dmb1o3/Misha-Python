@@ -1,6 +1,6 @@
+import os
 import cv2
 import numpy as np
-import os
 
 
 def apply_mask(image, mask, xc, yc, radius):
@@ -22,6 +22,15 @@ def apply_mask(image, mask, xc, yc, radius):
 
 
 def calibrate_light(directory, num_lights):
+    """
+    Given a directory with calibration photos and the number of lights will caculate light vectors and store in
+    a text file in directory/calibrate_light.txt
+
+    :param directory: Directory with calibration images of metal ball. Must be only photos in the directory
+    :param num_lights: The number of light directions
+    :return: Does not return anything
+    """
+
     # Get the mask
     mask_filename = os.path.join(directory, 'mask/calibration_mask.tiff')
     circle = cv2.imread(mask_filename, cv2.IMREAD_GRAYSCALE)
@@ -76,7 +85,4 @@ def calibrate_light(directory, num_lights):
     with open(output_file, 'w') as f:
         for light_dir in L:
             f.write(f"{light_dir[0]:.5f} {light_dir[1]:.5f} {light_dir[2]:.5f}\n")
-
-    # Return the light directions
-    return L
 
