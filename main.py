@@ -88,13 +88,13 @@ def preprocess_generate_mask(directory):
 
 def run():
     # Set directory with images
-    directory = "./data/balanced8/"
+    directory = "./data/balanced/"
     # Preprocess images and generate mask for calibration and target
     preprocess_generate_mask(directory)
     # Update the directory to now use the preprocessed images we just generated
     directory = directory + "preprocessedImages/"
     # Calibrate the lights
-    #calibrate_light(directory, 4)
+    calibrate_light(directory, 4)
     # Generate the normal maps
     generate_normal_map(directory)
     # Generate the depth map

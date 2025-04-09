@@ -1,6 +1,6 @@
 import cv2
 
-filename = './data/balanced8/target_southwest.tiff'
+filename = './data/balanced/calibration_west.tiff'
 # Load the image
 image = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
 

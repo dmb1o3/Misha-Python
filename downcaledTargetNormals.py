@@ -5,6 +5,7 @@ import time
 from rps import RPS
 from matplotlib import pyplot as plt
 from scipy.io import savemat
+import cv2 as cv
 
 # Choose a method
 METHOD = RPS.L2_SOLVER    # Least-squares
@@ -33,7 +34,15 @@ def generate_normal_map(directory):
     normals = np.load(directory + "/downscaledTargetNormals.npy")
     mat = {'Normals' : normals}
     savemat(directory + 'downscaledTargetNormals.mat', mat)
-    plt.imshow(normals, cmap='gray')
+    #io.imsave(RESULTS_FOLDERNAME + IMAGES_NAME + 'normal.png', map)
+
+    NORMAL_MAP_A_IMAGE = (normals-np.min(normals))/(np.max(normals)-np.min(normals))
+    NORMAL_MAP_A_IMAGE = (NORMAL_MAP_A_IMAGE* 255).astype(np.uint8)
+    image_bgr = cv.cvtColor(NORMAL_MAP_A_IMAGE, cv.COLOR_RGB2BGR)
+    cv.imshow("Name", image_bgr)
+    cv.waitKey(0)
+
+    plt.imshow(NORMAL_MAP_A_IMAGE, cmap='gray')
     plt.show()
 
-    return normals
+    return image_bgr
