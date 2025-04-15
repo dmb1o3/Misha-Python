@@ -6,6 +6,14 @@ import scipy.sparse as sparse
 from scipy.sparse.linalg import spsolve
 from sklearn.preprocessing import normalize
 
+import plotly.graph_objects as go
+
+"""
+Taken from
+
+https://github.com/gray0018/Discrete-normal-integration
+"""
+
 eps = np.finfo(float).eps  # epsilon for avoiding zero division
 
 # command line parser
@@ -216,7 +224,8 @@ def read_normal_map(path):
         n = cv2.imread(path)
 
         n[..., 0], n[..., 2] = n[..., 2], n[..., 0].copy()  # Change BGR to RGB
-        mask_bg = (n[..., 2] == 0)  # get background mask
+        #mask_bg = (n[..., 2] == 0)  # get background mask
+        mask_bg = (n[..., 2] == 128)  # get background mask
         n = n.astype(np.float32)  # uint8 -> float32
 
         # x,y:[0,255]->[-1,1] z:[128,255]->[0,1]
@@ -246,6 +255,27 @@ def remove_polynomial_trend(depth_map, degree=2):
     """
     # Replace 0 with NaN
     depth_map = np.where(depth_map == 0, np.nan, depth_map)
+    # Create a mask for valid (non-NaN) points
+    valid_mask = ~np.isnan(depth_map)
+
+    # Extract only the valid coordinates and depth values
+    y_indices, x_indices = np.where(valid_mask)
+    valid_Z = depth_map[valid_mask]
+
+    # Create a new compact depth map that only contains valid points
+    # First, find the bounding box of valid points
+    min_y, max_y = y_indices.min(), y_indices.max()
+    min_x, max_x = x_indices.min(), x_indices.max()
+
+    # Calculate dimensions of the compact depth map
+    compact_height = max_y - min_y + 1
+    compact_width = max_x - min_x + 1
+
+    # Create the compact depth map filled with NaN
+    depth_map = np.full((compact_height, compact_width), np.nan)
+
+    # Fill in the valid values (shifted to start at 0,0)
+    depth_map[y_indices - min_y, x_indices - min_x] = valid_Z
     height, width = depth_map.shape
 
     # Create coordinate grids
@@ -265,13 +295,16 @@ def remove_polynomial_trend(depth_map, degree=2):
     y_mean, y_std = y.mean(), y.std()
     x_norm = (x - x_mean) / x_std
     y_norm = (y - y_mean) / y_std
+    z_mean = z.mean()
+    z_std = z.std()
+    z_norm = (z - z_mean) / z_std
 
     # Generate polynomial terms
     powers = [(i, j) for i in range(degree + 1) for j in range(degree + 1 - i)]
     A = np.column_stack([x_norm ** i * y_norm ** j for i, j in powers])
 
     # Fit polynomial using lstsq (faster)
-    coeffs, _, _, _ = np.linalg.lstsq(A, z, rcond=None)
+    coeffs, _, _, _ = np.linalg.lstsq(A, z_norm, rcond=None)
 
     # Define polynomial function for reconstruction
     def poly_func(x, y, coeffs):
@@ -279,21 +312,15 @@ def remove_polynomial_trend(depth_map, degree=2):
             coeffs[k] * ((x - x_mean) / x_std) ** i * ((y - y_mean) / y_std) ** j for k, (i, j) in enumerate(powers))
 
     # Reconstruct fitted surface
-    fitted_surface = poly_func(X_grid, Y_grid, coeffs)
-
-    # Create mask
-    #mask = ~np.isnan(depth_map)
-
-    # Apply mask to fitted surface
-    #fitted_surface = fitted_surface * mask
+    fitted_surface = poly_func(X_grid, Y_grid, coeffs) * z_std + z_mean
 
     # Subtract fitted surface
     corrected_depth_map = depth_map - fitted_surface
 
-    return corrected_depth_map, fitted_surface
+    return depth_map, corrected_depth_map, fitted_surface
 
 
-def generate_depth_map(normal_path, output, depth=None, d_lambda=100, write=True):
+def generate_depth_map(normal_path, output, depth=None, d_lambda=100):
     print("Start reading input data...")
     n, mask = read_normal_map(normal_path)
     if depth is not None:
@@ -305,11 +332,19 @@ def generate_depth_map(normal_path, output, depth=None, d_lambda=100, write=True
     task = PoissonOperator(np.dstack([p, q]), mask.astype(np.int8), depth, d_lambda)
     print("Start normal integration...")
     d = task.run()
+    d = np.where(d == 0, np.nan, d)
+    mask = ~np.isnan(d)
+    d[mask] = d[mask] - d[mask].min()
+    # Shift by the minimum to ensure that the z values do not go below 0
     print("Start polynomial fitting...")
-    c_d, fitted = remove_polynomial_trend(d, degree=2)
-    if write:
-        print("Start writing obj file...")
-        write_obj("{0}.obj".format(output), d, task.v_index)  # write obj file
+    d, c_d, fitted = remove_polynomial_trend(d, degree=1)
+    mask = ~np.isnan(d)
+    #c_d = c_d - c_d.min()
+    #mask = ~np.isnan(c_d)
+
+    # Apply mask to fitted surface
+    #fitted = fitted * mask
+    #c_d = shift_d - (fitted - d.min())
 
     print("Start writing depth map...")
     write_depth_map("{0}_depth.npy".format(output), d, ~mask)  # write depth file
@@ -339,3 +374,8 @@ if __name__ == '__main__':
     print("Start writing depth map...")
     write_depth_map("{0}_depth.npy".format(args.output), d, ~mask)  # write depth file
     print("Finish!")
+
+    fig3 = go.Figure()
+    fig3 = go.Figure(data=[go.Surface(z=d, colorscale='gray')])
+    fig3.update_layout(title='Depth Map', autosize=True)
+    fig3.show()
