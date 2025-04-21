@@ -2,6 +2,8 @@ import cv2
 import argparse
 import itertools
 import numpy as np
+import tkinter as tk
+from tkinter import filedialog
 import scipy.sparse as sparse
 from scipy.sparse.linalg import spsolve
 from sklearn.preprocessing import normalize
@@ -350,27 +352,56 @@ def generate_depth_map(normal_path, output, degree=2, depth=None, d_lambda=100):
 
 
 if __name__ == '__main__':
-    args = parser.parse_args()
+    root = tk.Tk()
+    root.withdraw()
+    # Prompt user to set directory with images
+    directory = filedialog.askdirectory() + '/'
+    normal_path = directory + "normals/normal_map.npy"
+    output = directory + "depth_map"
 
+    d_lambda = 100
+    degree = input("How many degrees would you like to fit polynomial to: ")
+    degree = int(degree)
     print("Start reading input data...")
-    n, mask = read_normal_map(args.normal)
-    if args.depth is not None:
-        args.depth = np.load(args.depth)
+    n, mask = read_normal_map(normal_path)
+
     p = -n[..., 0] / (n[..., 2] + eps)  # avoid zero devision
     q = -n[..., 1] / (n[..., 2] + eps)  # avoid zero devision
 
-    task = PoissonOperator(np.dstack([p, q]), mask.astype(np.int8), args.depth, args.d_lambda)
+    task = PoissonOperator(np.dstack([p, q]), mask.astype(np.int8), None, d_lambda)
     print("Start normal integration...")
     d = task.run()
-
-    if args.write_obj:
-        print("Start writing obj file...")
-        write_obj("{0}.obj".format(args.output), d, task.v_index)  # write obj file
+    d = np.where(d == 0, np.nan, d)
+    mask = ~np.isnan(d)
+    d[mask] = d[mask] - d[mask].min()
+    # Shift by the minimum to ensure that the z values do not go below 0
+    print("Start polynomial fitting...")
+    d, c_d, fitted = remove_polynomial_trend(d, degree=degree)
+    mask = ~np.isnan(d)
+    c_mask = ~np.isnan(c_d)
 
     print("Start writing depth map...")
-    write_depth_map("{0}_depth.npy".format(args.output), d, ~mask)  # write depth file
+    write_depth_map("{0}.npy".format(output), d, ~mask)  # write depth file
+    write_depth_map("{0}_corrected.npy".format(output), c_d, ~c_mask)  # write depth file
     print("Finish!")
 
+    # Create figure
+    fig = go.Figure()
+    # Add original depth map
+    fig.add_trace(go.Surface(z=d, colorscale='gray', opacity=0.7, name="Original Depth"))
+    # Add fitted polynomial surface
+    fig.add_trace(go.Surface(z=fitted, colorscale='viridis', opacity=0.6, name="Fitted Curve"))
+    # Update layout
+    fig.update_layout(title='Original Depth Map vs Fitted Polynomial Surface', autosize=True)
+    fig.show()
+    # Display the corrected depth map
+    fig2 = go.Figure()
+    fig2 = go.Figure(data=[go.Surface(z=c_d, colorscale='gray')])
+    # fig2.update_layout(title='Corrected Depth Map', autosize=True)
+    fig2.update_layout(title='Corrected Depth Map',
+                       scene=dict(zaxis=dict(range=[c_d.min(), 2000])), autosize=True)
+    fig2.show()
+    # Display Original depth map
     fig3 = go.Figure()
     fig3 = go.Figure(data=[go.Surface(z=d, colorscale='gray')])
     fig3.update_layout(title='Depth Map', autosize=True)

@@ -1,8 +1,10 @@
 import os
 import cv2
+import tkinter as tk
+from tkinter import filedialog
 import plotly.graph_objects as go
 from tools.preprocess import preprocess_image
-from tools.depth_map import generate_depth_map
+from depth_map import generate_depth_map
 from tools.SAMSegmenter import SAMSegmenter, checkpoints
 from tools.normal_map import generate_normal_map
 from tools.calibrate_lights import calibrate_light
@@ -73,7 +75,11 @@ def preprocess_generate_mask(directory):
 
 def run():
     # Set directory with images
-    directory = "./3-5-2025/"
+    root = tk.Tk()
+    root.withdraw()
+    # Prompt user to set directory with images
+    directory = filedialog.askdirectory() + '/'
+    #directory = "./3-5-2025/"
     # Preprocess images and generate mask for calibration and target
     preprocess_generate_mask(directory)
     # Update the directory to now use the preprocessed images we just generated

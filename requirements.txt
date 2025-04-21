@@ -6,6 +6,7 @@ scikit-image~=0.25.1
 numba~=0.61.0
 scipy~=1.15.1
 torch
+tkinter
 torchvision
 pillow~=11.1.0
 segment_anything~=1.0
