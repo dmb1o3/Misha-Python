@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import cv2
 from matplotlib import pyplot as plt
-from rps import RPS
+from tools.rps import RPS
 import time
 import numpy as np
 
@@ -47,9 +47,13 @@ def generate_normal_map(directory):
     normals = np.load(directory + "normals/normal_map.npy")
     # Scale normal map from [-1, 1] to [0, 255] and then display it. Just so it displays properly
     normals = ((normals + 1.0) / 2.0 * 255).astype(np.uint8)
+    # Check the z component (which is usually the 3rd channel/blue channel)
+    z_channel = normals[:, :, 2]  # Assuming your normal map has shape (height, width, 3)
+    # Force z values to be between 128 and 255
+    normals[:, :, 2] = np.clip(normals[:, :, 2], 128, 255)
     # CV2 expects BGR while matplotlib expects RGB. Convert to BGR and then save properly
     cv2_normals = cv2.cvtColor(normals, cv2.COLOR_RGB2BGR)
     cv2.imwrite(directory + "normals/normal_map.png", cv2_normals)
-    plt.imshow(normals, cmap='gray')
+    plt.imshow(normals)
     plt.show()
 

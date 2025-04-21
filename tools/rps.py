@@ -8,8 +8,8 @@ __author__ = "Yasuyuki Matsushita <yasumat@ist.osaka-u.ac.jp>"
 __version__ = "0.1.0"
 __date__ = "11 May 2018"
 
-import psutil
-import rpsnumerics
+from tools import psutil
+import tools.rpsnumerics
 import numpy as np
 from sklearn.preprocessing import normalize
 

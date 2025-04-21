@@ -1,12 +1,11 @@
 import os
 import cv2
-import numpy as np
 import plotly.graph_objects as go
-from preprocess import preprocess_image
-from depth_map import generate_depth_map
-from normal_map import generate_normal_map
-from calibrate_lights import calibrate_light
-from SAMSegmenter import SAMSegmenter, checkpoints
+from tools.preprocess import preprocess_image
+from tools.depth_map import generate_depth_map
+from tools.SAMSegmenter import SAMSegmenter, checkpoints
+from tools.normal_map import generate_normal_map
+from tools.calibrate_lights import calibrate_light
 
 def check_make_folder(directory):
     """
@@ -76,13 +75,13 @@ def run():
     # Set directory with images
     directory = "./3-19-2025/"
     # Preprocess images and generate mask for calibration and target
-    #preprocess_generate_mask(directory)
+    preprocess_generate_mask(directory)
     # Update the directory to now use the preprocessed images we just generated
     directory = directory + "preprocessedImages/"
     # Calibrate the lights
-    #calibrate_light(directory, 8)
+    calibrate_light(directory, 8)
     # Generate the normal maps
-    #generate_normal_map(directory)
+    generate_normal_map(directory)
     # Generate the depth map
     depth_map, corrected_depth_map, fitted_curve = generate_depth_map(directory + "normals/normal_map.npy", directory + "depth_map")
     # Create figure
@@ -93,19 +92,13 @@ def run():
     fig.add_trace(go.Surface(z=fitted_curve, colorscale='viridis', opacity=0.6, name="Fitted Curve"))
     # Update layout
     fig.update_layout(title='Original Depth Map vs Fitted Polynomial Surface', autosize=True)
-    #fig.update_layout(title='Original Depth Map vs Fitted Polynomial Surface',     scene=dict(
-    #    xaxis=dict(range=[1100, 1700]),
-    #    yaxis=dict(range=[800, 1400]),
-    #    zaxis=dict(range=[0, 250]),
-    #    aspectmode='manual',  # This is important to manually set the aspect ratio
-    #))
     fig.show()
     # Display the corrected depth map
     fig2 = go.Figure()
     fig2 = go.Figure(data=[go.Surface(z=corrected_depth_map, colorscale='gray')])
-    fig2.update_layout(title='Corrected Depth Map', autosize=True)
-    #fig2.update_layout(title='Corrected Depth Map',
-    #    scene=dict(zaxis=dict(range=[-40, 200])),autosize=True)
+    #fig2.update_layout(title='Corrected Depth Map', autosize=True)
+    fig2.update_layout(title='Corrected Depth Map',
+       scene=dict(zaxis=dict(range=[-40, 2000])),autosize=True)
     fig2.show()
     # Display Original depth map
     fig3 = go.Figure()

@@ -337,17 +337,13 @@ def generate_depth_map(normal_path, output, depth=None, d_lambda=100):
     d[mask] = d[mask] - d[mask].min()
     # Shift by the minimum to ensure that the z values do not go below 0
     print("Start polynomial fitting...")
-    d, c_d, fitted = remove_polynomial_trend(d, degree=1)
+    d, c_d, fitted = remove_polynomial_trend(d, degree=3)
     mask = ~np.isnan(d)
-    #c_d = c_d - c_d.min()
-    #mask = ~np.isnan(c_d)
-
-    # Apply mask to fitted surface
-    #fitted = fitted * mask
-    #c_d = shift_d - (fitted - d.min())
+    c_mask = ~np.isnan(c_d)
 
     print("Start writing depth map...")
-    write_depth_map("{0}_depth.npy".format(output), d, ~mask)  # write depth file
+    write_depth_map("{0}.npy".format(output), d, ~mask)  # write depth file
+    write_depth_map("{0}_corrected.npy".format(output), c_d, ~c_mask)  # write depth file
     print("Finish!")
 
     return d, c_d, fitted
