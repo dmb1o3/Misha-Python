@@ -50,6 +50,6 @@ def generate_normal_map(directory):
     # CV2 expects BGR while matplotlib expects RGB. Convert to BGR and then save properly
     cv2_normals = cv2.cvtColor(normals, cv2.COLOR_RGB2BGR)
     cv2.imwrite(directory + "normals/normal_map.png", cv2_normals)
-    plt.imshow(normals, cmap='gray')
+    plt.imshow(cv2_normals, cmap='gray')
     plt.show()
 
