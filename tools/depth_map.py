@@ -320,7 +320,7 @@ def remove_polynomial_trend(depth_map, degree=2):
     return depth_map, corrected_depth_map, fitted_surface
 
 
-def generate_depth_map(normal_path, output, depth=None, d_lambda=100):
+def generate_depth_map(normal_path, output, degree=2, depth=None, d_lambda=100):
     print("Start reading input data...")
     n, mask = read_normal_map(normal_path)
     if depth is not None:
@@ -337,7 +337,7 @@ def generate_depth_map(normal_path, output, depth=None, d_lambda=100):
     d[mask] = d[mask] - d[mask].min()
     # Shift by the minimum to ensure that the z values do not go below 0
     print("Start polynomial fitting...")
-    d, c_d, fitted = remove_polynomial_trend(d, degree=3)
+    d, c_d, fitted = remove_polynomial_trend(d, degree=degree)
     mask = ~np.isnan(d)
     c_mask = ~np.isnan(c_d)
 

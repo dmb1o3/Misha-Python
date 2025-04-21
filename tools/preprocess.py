@@ -25,10 +25,10 @@ def flat_field(image, flat):
     return corrected
 
 
-def preprocess_image(calibration, target, downscale_factor, directory, suffix):
+def preprocess_image(calibration, target, flat, downscale_factor, directory, suffix):
     # Flat fielding
-    #calibration = flat_field(calibration, flat)
-    #target = flat_field(target, flat)
+    calibration = flat_field(calibration, flat)
+    target = flat_field(target, flat)
 
     # Image normalization
     calibration = cv2.normalize(calibration, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)

@@ -50,12 +50,12 @@ def preprocess_generate_mask(directory):
             prefix = prefix[0]
             # Check to see if we have subdict set up. If not set it up to store image
             if suffix not in image_data:
-                image_data[suffix] = {"target":None, "calibration":None} #, "flat":None}
+                image_data[suffix] = {"target":None, "calibration":None, "flat":None}
 
             image_data[suffix][prefix] = img
 
     for key in image_data:
-        preprocess_image(image_data[key]["calibration"], image_data[key]["target"], 0.5, directory, key)
+        preprocess_image(image_data[key]["calibration"], image_data[key]["target"], image_data[key]["flat"], 0.5, directory, key)
         calibration_mask = "calibration_" + key
         target_mask = "target_" + key
 
@@ -73,17 +73,17 @@ def preprocess_generate_mask(directory):
 
 def run():
     # Set directory with images
-    directory = "./3-19-2025/"
+    directory = "./3-5-2025/"
     # Preprocess images and generate mask for calibration and target
     preprocess_generate_mask(directory)
     # Update the directory to now use the preprocessed images we just generated
     directory = directory + "preprocessedImages/"
     # Calibrate the lights
-    calibrate_light(directory, 8)
+    calibrate_light(directory, 4)
     # Generate the normal maps
     generate_normal_map(directory)
     # Generate the depth map
-    depth_map, corrected_depth_map, fitted_curve = generate_depth_map(directory + "normals/normal_map.npy", directory + "depth_map")
+    depth_map, corrected_depth_map, fitted_curve = generate_depth_map(directory + "normals/normal_map.npy", directory + "depth_map", degree=2)
     # Create figure
     fig = go.Figure()
     # Add original depth map
