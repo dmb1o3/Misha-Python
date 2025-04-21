@@ -1,0 +1,66 @@
+# MISHA Photometric Stereo Reconstruction Processing Tool
+
+This software provides a full pipeline for reconstructing depth maps from photometric stereo images. 
+It is designed to work with images of an object captured under different lighting conditions and includes tools 
+for preprocessing, light source calibration, surface normal estimation, and final depth map generation and visualization.
+
+## Main Goals
+
+- **Preprocessing**: Normalize and align calibration and target images.
+- **Mask Generation**: Use SAM (Segment Anything Model) to segment the object from the background.
+- **Lighting Calibration**: Automatically estimate light directions from mirror ball calibration images.
+- **Normal Map Generation**: Estimate surface normals using image intensities and light calibration.
+- **Depth Map Estimation**: Generate a depth map by integrating the normal map.
+- **Visualization**: Render original and corrected depth maps using interactive 3D surface plots.
+
+## Requirements
+
+Ensure you have a working python 3.12 installation with the required python packages installed. 
+The correct package versions can be installed with the following command:
+
+```
+pip install -r requirements.txt
+```
+
+## Instructions for use
+
+On windows, navigate the terminal to the root directory of the processing repo. Then execute the following command:
+
+```
+python.exe .\main.py
+```
+
+The program will then prompt for the user to select a directory of images. When prompted, choose a folder that contains your original calibration and target images. These should follow a naming convention:
+
+```
+\projectdirectory\
+├── calibration_north.tiff 
+├── calibration_west.tiff ...
+├── flat_north.tiff 
+├── flat_west.tiff ...
+├── target_north.tiff 
+├── target_west.tiff ...
+```
+
+- Files prefixed with `calibration_` should be images of a reflective calibration object (e.g., mirror ball).
+- Files prefixed with `target_` should be images of the object of interest under the same lighting conditions.
+- Files prefixed with `flat_` should be images of the flat field reference for the lighting normalization.
+
+From this point the reconstruction pipeline should prompt for the user to select the object to be masked out with the SAM segmenter. As a user, simply click on the object and verify that the highlight matches the portion of the image containing the object. If it does not fully encapsulate the object, multiple points can be selected to improve the segmentation. After selecting the object, the user can close the prompt window and from this point the pipeline will automatically process the images into depth and normal maps, and open a user display for the final corrected depth maps.
+
+## Additional Details For Further Testing and Development
+
+The code as it is right now is hardcoded for 4 light calibration, however if the user wanted to increase the number 
+of lighting directions you can simply change the call to the calibrate lights function from the main function in 
+`main.py` to include the number of lights that is being used, as reflected by the number of pictures in the processing 
+directory. The curve fitting algorithm when run through whole program is also hard coded degree in `main.py`. 
+The degree can be adjusted in the generate_depth_map function's call in the main function of `main.py`. 
+You can also run just `depth_map.py` after generating the preprocessed images and normal map to set the degrees form
+the command line.
+
+
+
+
+
+
+

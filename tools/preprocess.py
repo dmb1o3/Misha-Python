@@ -12,17 +12,18 @@ def flat_field(image, flat):
     # Clip values to valid range and convert back to original type
     corrected = np.clip(corrected, 0, 255).astype(typ)
     """
-    original_mean = np.mean(image)
+    image = image.astype(np.float32)
+    flat_field = flat.astype(np.float32)
 
-    # Apply correction
-    corrected = image.astype(np.float32) * flat.astype(np.float32)
+    # Normalize the flat field image
+    flat_field_normalized = flat_field / np.mean(flat_field)
 
-    # Scale to maintain original average brightness
-    corrected = corrected * (original_mean / np.mean(corrected))
+    # Perform flat field correction
+    corrected_image = image / flat_field_normalized
 
-
-    corrected = np.clip(corrected, 0, 255).astype(image.dtype)
-    return corrected
+    # Clip the values to ensure they are within the valid range
+    corrected_image = np.clip(corrected_image, 0, 255).astype(np.uint8)
+    return corrected_image
 
 
 def preprocess_image(calibration, target, flat, downscale_factor, directory, suffix):
