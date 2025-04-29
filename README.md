@@ -4,6 +4,12 @@ This software provides a full pipeline for reconstructing depth maps from photom
 It is designed to work with images of an object captured under different lighting conditions and includes tools 
 for preprocessing, light source calibration, surface normal estimation, and final depth map generation and visualization.
 
+## Image capturing
+This code should be able to be used by itself if provided flat fielding and photostereometric images. Was made to be 
+used with this git hub repo
+
+https://github.com/lillikelley/22753-cultural-heritage-imaging/tree/main
+
 ## Main Goals
 
 - **Preprocessing**: Normalize and align calibration and target images.
@@ -30,7 +36,8 @@ On windows, navigate the terminal to the root directory of the processing repo. 
 python.exe .\main.py
 ```
 
-The program will then prompt for the user to select a directory of images. When prompted, choose a folder that contains your original calibration and target images. These should follow a naming convention:
+The program will then prompt for the user to select a directory of images. When prompted, choose a folder that contains 
+your original calibration and target images. These should follow a naming convention:
 
 ```
 \projectdirectory\
@@ -46,7 +53,21 @@ The program will then prompt for the user to select a directory of images. When 
 - Files prefixed with `target_` should be images of the object of interest under the same lighting conditions.
 - Files prefixed with `flat_` should be images of the flat field reference for the lighting normalization.
 
-From this point the reconstruction pipeline should prompt for the user to select the object to be masked out with the SAM segmenter. As a user, simply click on the object and verify that the highlight matches the portion of the image containing the object. If it does not fully encapsulate the object, multiple points can be selected to improve the segmentation. After selecting the object, the user can close the prompt window and from this point the pipeline will automatically process the images into depth and normal maps, and open a user display for the final corrected depth maps.
+From this point the reconstruction pipeline should prompt for the user to select the object to be masked out with the 
+SAM segmenter. As a user, simply click on the object and verify that the highlight matches the portion of the image 
+containing the object. If it does not fully encapsulate the object, multiple points can be selected to improve the 
+segmentation. After selecting the object, the user can close the prompt window and from this point the pipeline 
+will automatically process the images into depth and normal maps, and open a user display for the final 
+corrected depth maps.
+
+If you do not like the corrected depth maps you can run after running through the pipeline
+
+```
+python.exe .\depth_map.py
+```
+
+A window will pop up and you should select the preprocessedImages folder in image folder you want to use. 
+From the command line you can input a degree to fit polynomial to and see the new results. 
 
 ## Additional Details For Further Testing and Development
 
@@ -54,13 +75,4 @@ The code as it is right now is hardcoded for 4 light calibration, however if the
 of lighting directions you can simply change the call to the calibrate lights function from the main function in 
 `main.py` to include the number of lights that is being used, as reflected by the number of pictures in the processing 
 directory. The curve fitting algorithm when run through whole program is also hard coded degree in `main.py`. 
-The degree can be adjusted in the generate_depth_map function's call in the main function of `main.py`. 
-You can also run just `depth_map.py` after generating the preprocessed images and normal map to set the degrees form
-the command line.
-
-
-
-
-
-
-
+The degree can be adjusted in the generate_depth_map function's call in the main function of `main.py`.

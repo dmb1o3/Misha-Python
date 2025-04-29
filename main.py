@@ -79,7 +79,6 @@ def run():
     root.withdraw()
     # Prompt user to set directory with images
     directory = filedialog.askdirectory() + '/'
-    #directory = "./3-5-2025/"
     # Preprocess images and generate mask for calibration and target
     preprocess_generate_mask(directory)
     # Update the directory to now use the preprocessed images we just generated

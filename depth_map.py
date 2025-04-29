@@ -346,6 +346,18 @@ def generate_depth_map(normal_path, output, degree=2, depth=None, d_lambda=100):
     print("Start writing depth map...")
     write_depth_map("{0}.npy".format(output), d, ~mask)  # write depth file
     write_depth_map("{0}_corrected.npy".format(output), c_d, ~c_mask)  # write depth file
+    # Setup for blender object
+    v_count = (mask.astype(np.int32)).sum()
+    v_index = np.zeros_like(mask, dtype='uint')  # indices for all vertices
+    v_index[mask.astype(np.bool_)] = np.arange(v_count) + 1
+    # Write blender object
+    write_obj("{0}.obj".format(output), d, v_index) # Write blender object file
+    # Setup for blender object
+    v_count = (c_mask.astype(np.int32)).sum()
+    v_index = np.zeros_like(c_mask, dtype='uint')  # indices for all vertices
+    # Write blender object
+    v_index[mask.astype(np.bool_)] = np.arange(v_count) + 1
+    write_obj("{0}_corrected.obj".format(output), c_d, v_index) # Write corrected blender object file
     print("Finish!")
 
     return d, c_d, fitted
@@ -382,7 +394,17 @@ if __name__ == '__main__':
 
     print("Start writing depth map...")
     write_depth_map("{0}.npy".format(output), d, ~mask)  # write depth file
-    write_depth_map("{0}_corrected.npy".format(output), c_d, ~c_mask)  # write depth file
+    write_depth_map("{0}_corrected.npy".format(output), c_d, ~c_mask)  # write corrected depth file
+    # Setup for blender object
+    v_count = (mask.astype(np.int32)).sum()
+    v_index = np.zeros_like(mask, dtype='uint')  # indices for all vertices
+    v_index[mask.astype(np.bool_)] = np.arange(v_count) + 1
+    write_obj("{0}.obj".format(output), d, v_index) # Write blender object file
+    # Setup for blender object
+    v_count = (c_mask.astype(np.int32)).sum()
+    v_index = np.zeros_like(c_mask, dtype='uint')  # indices for all vertices
+    v_index[mask.astype(np.bool_)] = np.arange(v_count) + 1
+    write_obj("{0}_corrected.obj".format(output), c_d, v_index) # Write corrected blender object file
     print("Finish!")
 
     # Create figure
