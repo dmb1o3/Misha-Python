@@ -69,6 +69,37 @@ python.exe .\depth_map.py
 A window will pop up and you should select the preprocessedImages folder in image folder you want to use. 
 From the command line you can input a degree to fit polynomial to and see the new results. 
 
+## Demo
+To try running the demo first make sure you have the SAM Checkpoints downloaded and stored in folder in root of project
+called "SAM Checkpoints"
+
+```
+python.exe .\main.py
+```
+
+A folder will pop up letting you select what images to use for demo select demo-images folder. This should be the folder with calibration, target and flat
+field images. 
+
+![Mask_Image](README%20images/Mask.png)
+
+Next a window will pop up to let you choose mask for the calibration ball. Simply left click to designate what
+to apply mask to and right click to designate the background. A white opaque mask should signify what the mask looks like
+and when satisfied you can simply close the pop-up window to do the same for the target image. 
+
+![Demo_Normal_Image](README%20images/Demo%20Normal.png)
+
+Next a window will pop up to display the normal map. Once closed the depth map generation will start and pop up
+three plots when finished. One for the original depth map created, another with depth map and fitted polynomial and
+lastly the corrected depth map using the fitted polynomial to flatten the object. May need to play with scale of plots
+to adjust how they view if you try other images
+
+![Demo_Depth_Image](README%20images/Depth%20Map.png)
+
+![Demo_Fitted_Depth_Image](README%20images/Fitted%20Depth%20Map.png)
+
+![Demo_Corrected_Depth_Image](README%20images/Corrected%20Depth%20Map.png)
+
+
 ## Additional Details For Further Testing and Development
 
 The code as it is right now is hardcoded for 4 light calibration, however if the user wanted to increase the number 
