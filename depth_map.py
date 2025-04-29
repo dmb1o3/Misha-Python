@@ -421,7 +421,7 @@ if __name__ == '__main__':
     fig2 = go.Figure(data=[go.Surface(z=c_d, colorscale='gray')])
     # fig2.update_layout(title='Corrected Depth Map', autosize=True)
     fig2.update_layout(title='Corrected Depth Map',
-                       scene=dict(zaxis=dict(range=[c_d.min(), 2000])), autosize=True)
+                       scene=dict(zaxis=dict(range=[c_d.min(), 1000])), autosize=True)
     fig2.show()
     # Display Original depth map
     fig3 = go.Figure()
