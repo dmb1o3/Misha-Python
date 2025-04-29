@@ -28,6 +28,23 @@ The correct package versions can be installed with the following command:
 pip install -r requirements.txt
 ```
 
+Also you will need to download model checkpoints and save them to a folder in the root of the project called 
+"SAM Checkpoints" located here 
+
+https://github.com/facebookresearch/segment-anything?tab=readme-ov-file#model-checkpoints
+
+Current project is hard coded to use the vit_l checkpoint but that can be changed by modifiying the main.py function
+call on line 65 from
+
+```
+segmenter = SAMSegmenter("vit_l", checkpoints["vit_l"])
+
+to 
+segmenter = SAMSegmenter("vit_b", checkpoints["vit_b"])
+or
+segmenter = SAMSegmenter("vit_h", checkpoints["vit_h"])
+```
+
 ## Instructions for use
 
 On windows, navigate the terminal to the root directory of the processing repo. Then execute the following command:
