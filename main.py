@@ -1,5 +1,6 @@
 import os
 import cv2
+import argparse
 import tkinter as tk
 from tkinter import filedialog
 import plotly.graph_objects as go
@@ -73,12 +74,7 @@ def preprocess_generate_mask(directory):
     )
 
 
-def run():
-    # Set directory with images
-    root = tk.Tk()
-    root.withdraw()
-    # Prompt user to set directory with images
-    directory = filedialog.askdirectory() + '/'
+def _run_pipeline(directory, degree=3):
     # Preprocess images and generate mask for calibration and target
     preprocess_generate_mask(directory)
     # Update the directory to now use the preprocessed images we just generated
@@ -88,7 +84,8 @@ def run():
     # Generate the normal maps
     generate_normal_map(directory)
     # Generate the depth map
-    depth_map, corrected_depth_map, fitted_curve = generate_depth_map(directory + "normals/normal_map.npy", directory + "depth_map", degree=2)
+    depth_map, corrected_depth_map, fitted_curve = generate_depth_map(directory + "normals/normal_map.npy", directory + "depth_map", degree=3)
+
     # Create figure
     fig = go.Figure()
     # Add original depth map
@@ -99,18 +96,39 @@ def run():
     fig.update_layout(title='Original Depth Map vs Fitted Polynomial Surface', autosize=True)
     fig.show()
     # Display the corrected depth map
-    fig2 = go.Figure()
     fig2 = go.Figure(data=[go.Surface(z=corrected_depth_map, colorscale='gray')])
-    #fig2.update_layout(title='Corrected Depth Map', autosize=True)
-    fig2.update_layout(title='Corrected Depth Map',
-       scene=dict(zaxis=dict(range=[corrected_depth_map.min(), 2000])),autosize=True)
+    fig2.update_layout(title='Corrected Depth Map', autosize=True)
     fig2.show()
     # Display Original depth map
-    fig3 = go.Figure()
     fig3 = go.Figure(data=[go.Surface(z=depth_map, colorscale='gray')])
     fig3.update_layout(title='Depth Map', autosize=True)
     fig3.show()
 
+def run_headless(directory, degree=3):
+    """Command-line mode: takes a path directly."""
+    if not directory.endswith('/'):
+        directory += '/'
+    print(f"Processing: {directory}")
+    _run_pipeline(directory, degree)
+    print("Done!")
+
+def run_gui():
+    """GUI mode: opens folder picker dialog."""
+    # Set directory with images
+    root = tk.Tk()
+    root.withdraw()
+    # Prompt user to set directory with images
+    directory = filedialog.askdirectory() + '/'
+    _run_pipeline(directory)
 
 if __name__ == "__main__":
-    run()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("directory", nargs="?", help="Path to image directory")
+    parser.add_argument("--degree", type=int, default=3)
+    parser.add_argument("--gui", action="store_true", help="Use folder picker dialog")
+    args = parser.parse_args()
+
+    if args.gui or args.directory is None:
+        run_gui()
+    else:
+        run_headless(args.directory, args.degree)
