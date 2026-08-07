@@ -84,7 +84,12 @@ def _run_pipeline(directory, degree=3):
     # Generate the normal maps
     generate_normal_map(directory)
     # Generate the depth map
-    depth_map, corrected_depth_map, fitted_curve = generate_depth_map(directory + "normals/normal_map.npy", directory + "depth_map", degree=3)
+    depth_map, corrected_depth_map, fitted_curve = generate_depth_map(
+        directory + "normals/normal_map.npy",
+        directory + "depth_map",
+        degree=degree,
+        obj_scale=0.09 # mm per pixel from 2" calibration target
+    )
 
     # Create figure
     fig = go.Figure()

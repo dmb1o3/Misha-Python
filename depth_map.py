@@ -17,7 +17,7 @@ https://github.com/gray0018/Discrete-normal-integration
 eps = np.finfo(float).eps  # epsilon for avoiding zero division
 
 
-def write_obj(filename, d, d_ind):
+def write_obj(filename, d, d_ind, obj_scale=1.0):
     print(f"write_obj called for {filename}")
     print(f"d shape: {d.shape}, dtype: {d.dtype}")
     print(f"d_ind shape: {d_ind.shape}, dtype: {d_ind.dtype}")
@@ -32,14 +32,17 @@ def write_obj(filename, d, d_ind):
     obj = open(filename, "w")
     h, w = d.shape
 
-    x = np.arange(0.5, w, 1)
-    y = np.arange(0.5, h, 1) # matches numpy indexing
+    # Pixel size in real-world units (from calibration)
+    pixel_scale = obj_scale
+
+    x = np.arange(0.5, w, 1) * pixel_scale
+    y = np.arange(0.5, h, 1) * pixel_scale # matches numpy indexing
     xx, yy = np.meshgrid(x, y)
 
     mask = d_ind > 0
 
     # Write vertices
-    xyz = np.vstack((xx[mask], yy[mask], d[mask])).T
+    xyz = np.vstack((xx[mask], yy[mask], d[mask] * pixel_scale)).T
     obj.write(''.join([f"v {x} {y} {z}\n" for x, y, z in xyz]))
 
     # Build index map
@@ -327,7 +330,7 @@ def remove_polynomial_trend(depth_map, degree=2):
     return depth_map, corrected_depth_map, fitted_surface
 
 
-def generate_depth_map(normal_path, output, degree=1, depth=None, d_lambda=100):
+def generate_depth_map(normal_path, output, degree=1, depth=None, d_lambda=100, obj_scale=1.0):
     """
     Generate raw and corrected depth maps from normals.
 
@@ -386,8 +389,8 @@ def generate_depth_map(normal_path, output, degree=1, depth=None, d_lambda=100):
 
     # Export OBJ files for Blender
     print("Start writing output files...")
-    write_obj(f"{output}.obj", raw_d, raw_mask)
-    write_obj(f"{output}_corrected.obj", c_d, c_mask)
+    write_obj(f"{output}.obj", raw_d, raw_mask, obj_scale=obj_scale)
+    write_obj(f"{output}_corrected.obj", c_d, c_mask, obj_scale=obj_scale)
 
     # Save depth maps as .npy
     write_depth_map(f"{output}.npy", raw_d, ~raw_mask)
